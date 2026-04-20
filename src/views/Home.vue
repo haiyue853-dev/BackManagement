@@ -62,6 +62,25 @@ onMounted(() => {
         </el-table>
       </el-card>
     </el-col>
+    <el-col :span="16" style="margin-top: 20px">
+      <div class="num">
+        <el-card
+          :body-style="{ display: 'flex', padding: 0 }"
+          v-for="item in countData"
+          :key="item.name"
+        >
+          <component
+            :is="item.icon"
+            class="icons"
+            :style="{ background: item.color }"
+          ></component>
+          <div class="detail">
+            <p class="num">￥{{ item.value }}</p>
+            <p class="txt">￥{{ item.name }}</p>
+          </div>
+        </el-card>
+      </div>
+    </el-col>
   </el-row>
 </template>
 
@@ -105,6 +124,38 @@ onMounted(() => {
   }
   .user-table {
     margin-top: 20px;
+  }
+  .num {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    .el-card {
+      width: 30%;
+      margin-bottom: 20px;
+    }
+    .icons {
+      width: 80px;
+      height: 80px;
+      font-size: 30px;
+      text-align: center;
+      line-height: 80px;
+      color: #fff;
+    }
+    .detail {
+      margin-left: 15px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      .num {
+        font-size: 30px;
+        margin-bottom: 10px;
+      }
+      .txt {
+        font-size: 15px;
+        text-align: center;
+        color: #999;
+      }
+    }
   }
 }
 </style>
