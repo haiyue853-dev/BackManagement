@@ -6,20 +6,9 @@ const getImageUrl = (user) => {
   return new URL(`../assets/images/${user}.png`, import.meta.url).href
 }
 
-const tableData = ref([
-  {
-    name: 'Java',
-    todayBuy: 100,
-    monthBuy: 200,
-    totalBuy: 300,
-  },
-  {
-    name: 'Python',
-    todayBuy: 100,
-    monthBuy: 200,
-    totalBuy: 300,
-  },
-])
+const tableData = ref([])
+
+const countData = ref([])
 
 const tableLabel = ref({
   name: '课程',
@@ -30,11 +19,17 @@ const tableLabel = ref({
 
 const getTableData = async () => {
   const data = await proxy.$api.getTableData()
+
   tableData.value = data.tableData
+}
+const getCountData = async () => {
+  const data = await proxy.$api.getCountData()
+  countData.value = data
 }
 
 onMounted(() => {
   getTableData()
+  getCountData()
 })
 </script>
 
