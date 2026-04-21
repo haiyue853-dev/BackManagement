@@ -10,6 +10,7 @@ const getImageUrl = (user) => {
 const tableData = ref([])
 const countData = ref([])
 const chartData = ref([])
+const observer = ref(null)
 
 const tableLabel = ref({
   name: '课程',
@@ -59,6 +60,23 @@ const xOptions = reactive({
   series: [],
 })
 
+const pieOptions = reactive({
+  tooltip: {
+    trigger: 'item',
+  },
+  legend: {},
+  color: [
+    '#0f78f4',
+    '#dd536b',
+    '#9462e5',
+    '#a6a6a6',
+    '#e1bb22',
+    '#39c362',
+    '#3ed1cf',
+  ],
+  series: [],
+})
+
 const getTableData = async () => {
   const data = await proxy.$api.getTableData()
 
@@ -69,7 +87,7 @@ const getCountData = async () => {
   countData.value = data
 }
 const getChartData = async () => {
-  const { orderData } = await proxy.$api.getChartData()
+  const { orderData, userData, videoData } = await proxy.$api.getChartData()
   //对第一个图标进行x轴 和series赋值
   xOptions.xAxis.data = orderData.date
   xOptions.series = Object.keys(orderData.data[0]).map((val) => ({
@@ -79,8 +97,44 @@ const getChartData = async () => {
   }))
   const oneEchart = echarts.init(proxy.$refs['echart'])
   oneEchart.setOption(xOptions)
-}
 
+  //对第二个表格渲染
+  xOptions.xAxis.data = userData.map((item) => item.date)
+  xOptions.series = [
+    {
+      name: '新增用户',
+      data: userData.map((item) => item.new),
+      type: 'bar',
+    },
+    {
+      name: '活跃用户',
+      data: userData.map((item) => item.active),
+      type: 'bar',
+    },
+  ]
+  const twoEchart = echarts.init(proxy.$refs['userEchart'])
+  twoEchart.setOption(xOptions)
+  //饼状图渲染
+  pieOptions.series = [
+    {
+      data: videoData,
+      type: 'pie',
+    },
+  ]
+  const threeEchart = echarts.init(proxy.$refs['videoEchart'])
+  threeEchart.setOption(pieOptions)
+  //监听页面变化
+  //监听容器大小变化 改变之后执行回调
+  observer.value = new ResizeObserver((en) => {
+    oneEchart.resize()
+    twoEchart.resize()
+    threeEchart.resize()
+  })
+  //容器存在
+  if (proxy.$refs['echart']) {
+    observer.value.observe(proxy.$refs['echart'])
+  }
+}
 onMounted(() => {
   getTableData()
   getCountData()
@@ -136,8 +190,16 @@ onMounted(() => {
         </el-card>
       </div>
       <el-card class="top-echart">
-        <div ref="echart" style="height: 250px"></div>
+        <div ref="echart" style="height: 280px"></div>
       </el-card>
+      <div class="graph">
+        <el-card>
+          <div ref="userEchart" style="height: 240px"></div>
+        </el-card>
+        <el-card>
+          <div ref="videoEchart" style="height: 240px"></div>
+        </el-card>
+      </div>
     </el-col>
   </el-row>
 </template>
@@ -190,6 +252,7 @@ onMounted(() => {
     .el-card {
       width: 30%;
       margin-bottom: 20px;
+      overflow: hidden;
     }
     .icons {
       width: 80px;
@@ -204,6 +267,8 @@ onMounted(() => {
       display: flex;
       flex-direction: column;
       justify-content: center;
+      height: 80px;
+      overflow: hidden;
       .num {
         font-size: 30px;
         margin-bottom: 10px;
@@ -213,6 +278,16 @@ onMounted(() => {
         text-align: center;
         color: #999;
       }
+    }
+  }
+  .graph {
+    margin-top: 20px;
+    display: flex;
+    justify-content: space-between;
+    .el-card {
+      width: 49%;
+
+      overflow: hidden;
     }
   }
 }
