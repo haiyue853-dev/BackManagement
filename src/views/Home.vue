@@ -1,5 +1,6 @@
 <script setup>
 import { ref, getCurrentInstance, onMounted, reactive } from 'vue'
+import * as echarts from 'echarts'
 
 const { proxy } = getCurrentInstance()
 const getImageUrl = (user) => {
@@ -17,6 +18,47 @@ const tableLabel = ref({
   totalBuy: '总购买',
 })
 
+//这个是折线图和柱状图 两个图表共用的公共配置
+const xOptions = reactive({
+  // 图例文字颜色
+  textStyle: {
+    color: '#333',
+  },
+  legend: {},
+  grid: {
+    left: '20%',
+  },
+  // 提示框
+  tooltip: {
+    trigger: 'axis',
+  },
+  xAxis: {
+    type: 'category', // 类目轴
+    data: [],
+    axisLine: {
+      lineStyle: {
+        color: '#17b3a3',
+      },
+    },
+    axisLabel: {
+      interval: 0,
+      color: '#333',
+    },
+  },
+  yAxis: [
+    {
+      type: 'value',
+      axisLine: {
+        lineStyle: {
+          color: '#17b3a3',
+        },
+      },
+    },
+  ],
+  color: ['#2ec7c9', '#b6a2de', '#5ab1ef', '#ffb980', '#d87a80', '#8d98b3'],
+  series: [],
+})
+
 const getTableData = async () => {
   const data = await proxy.$api.getTableData()
 
@@ -27,9 +69,16 @@ const getCountData = async () => {
   countData.value = data
 }
 const getChartData = async () => {
-  const data = await proxy.$api.getChartData()
-  console.log(data)
-  chartData.value = data
+  const { orderData } = await proxy.$api.getChartData()
+  //对第一个图标进行x轴 和series赋值
+  xOptions.xAxis.data = orderData.date
+  xOptions.series = Object.keys(orderData.data[0]).map((val) => ({
+    name: val,
+    data: orderData.data.map((item) => item[val]),
+    type: 'line',
+  }))
+  const oneEchart = echarts.init(proxy.$refs['echart'])
+  oneEchart.setOption(xOptions)
 }
 
 onMounted(() => {
@@ -86,6 +135,9 @@ onMounted(() => {
           </div>
         </el-card>
       </div>
+      <el-card class="top-echart">
+        <div ref="echart" style="height: 250px"></div>
+      </el-card>
     </el-col>
   </el-row>
 </template>
