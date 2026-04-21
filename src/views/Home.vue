@@ -1,5 +1,5 @@
 <script setup>
-import { ref, getCurrentInstance, onMounted } from 'vue'
+import { ref, getCurrentInstance, onMounted, reactive } from 'vue'
 
 const { proxy } = getCurrentInstance()
 const getImageUrl = (user) => {
@@ -7,8 +7,8 @@ const getImageUrl = (user) => {
 }
 
 const tableData = ref([])
-
 const countData = ref([])
+const chartData = ref([])
 
 const tableLabel = ref({
   name: '课程',
@@ -26,10 +26,16 @@ const getCountData = async () => {
   const data = await proxy.$api.getCountData()
   countData.value = data
 }
+const getChartData = async () => {
+  const data = await proxy.$api.getChartData()
+  console.log(data)
+  chartData.value = data
+}
 
 onMounted(() => {
   getTableData()
   getCountData()
+  getChartData()
 })
 </script>
 

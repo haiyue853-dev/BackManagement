@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.2",
+    "echarts": "^6.0.0",
     "element-plus": "^2.13.7",
     "less": "^4.6.4",
     "mockjs": "^1.1.0",
