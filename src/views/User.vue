@@ -1,42 +1,48 @@
 <script setup>
-const tableData = [
+import { ref, getCurrentInstance, onMounted, reactive } from 'vue'
+
+const handleClick = () => {}
+
+const tableData = ref([])
+const { proxy } = getCurrentInstance()
+const getUserData = async () => {
+  let data = await proxy.$api.getUserData()
+
+  tableData.value = data.list.map((item) => {
+    return {
+      ...item,
+      sexLabel: item.sex == 1 ? '男' : '女',
+    }
+  })
+}
+
+const tableLabel = reactive([
   {
-    date: '2016-05-03',
-    name: 'Tom',
-    state: 'California',
-    city: 'Los Angeles',
-    address: 'No. 189, Grove St, Los Angeles',
-    zip: 'CA 90036',
-    tag: 'Home',
+    prop: 'name',
+    label: '姓名',
   },
   {
-    date: '2016-05-02',
-    name: 'Tom',
-    state: 'California',
-    city: 'Los Angeles',
-    address: 'No. 189, Grove St, Los Angeles',
-    zip: 'CA 90036',
-    tag: 'Office',
+    prop: 'age',
+    label: '年龄',
   },
   {
-    date: '2016-05-04',
-    name: 'Tom',
-    state: 'California',
-    city: 'Los Angeles',
-    address: 'No. 189, Grove St, Los Angeles',
-    zip: 'CA 90036',
-    tag: 'Home',
+    prop: 'sexLabel',
+    label: '性别',
   },
   {
-    date: '2016-05-01',
-    name: 'Tom',
-    state: 'California',
-    city: 'Los Angeles',
-    address: 'No. 189, Grove St, Los Angeles',
-    zip: 'CA 90036',
-    tag: 'Office',
+    prop: 'birth',
+    label: '出生日期',
+    width: 200,
   },
-]
+  {
+    prop: 'addr',
+    label: '地址',
+    width: 400,
+  },
+])
+onMounted(() => {
+  getUserData()
+})
 </script>
 
 <template>
@@ -53,12 +59,14 @@ const tableData = [
   </div>
   <div class="table">
     <el-table :data="tableData" style="width: 100%">
-      <el-table-column fixed prop="date" label="Date" width="150" />
-      <el-table-column prop="name" label="Name" width="120" />
-      <el-table-column prop="state" label="State" width="120" />
-      <el-table-column prop="city" label="City" width="120" />
-      <el-table-column prop="address" label="Address" width="600" />
-      <el-table-column prop="zip" label="Zip" width="120" />
+      <el-table-column
+        v-for="item in tableLabel"
+        :key="item.prop"
+        :width="item.width ? item.width : 125"
+        :prop="item.prop"
+        :label="item.label"
+      />
+
       <el-table-column fixed="right" label="Operations" min-width="120">
         <template #default>
           <el-button type="primary" size="small" @click="handleClick">
