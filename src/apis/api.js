@@ -24,11 +24,28 @@ export default {
       mock: false,
     })
   },
-  getUserData() {
+  getUserData(data) {
     return request({
       url: '/home/getUserData',
       method: 'get',
       mock: false,
+      data,
+    })
+  },
+  deleteUser(data) {
+    return request({
+      url: '/user/deleteUser',
+      method: 'get',
+      mock: false,
+      data,
+    })
+  },
+  addUser(data) {
+    return request({
+      url: '/user/addUser',
+      method: 'post',
+      mock: false,
+      data,
     })
   },
 }

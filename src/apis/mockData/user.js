@@ -61,4 +61,42 @@ export default {
       },
     }
   },
+  /**
+   * 删除用户
+   * @param id
+   * @return {*}
+   */
+  deleteUser: (config) => {
+    const { id } = param2Obj(config.url)
+
+    if (!id) {
+      return {
+        code: -999,
+        message: '参数不正确',
+      }
+    } else {
+      List = List.filter((u) => u.id !== id)
+      return {
+        code: 200,
+        message: '删除成功',
+      }
+    }
+  },
+  createUser: (config) => {
+    const { name, addr, age, birth, sex } = JSON.parse(config.body)
+    List.unshift({
+      id: Mock.Random.guid(),
+      name: name,
+      addr: addr,
+      age: age,
+      birth: birth,
+      sex: sex,
+    })
+    return {
+      code: 200,
+      data: {
+        message: '添加成功',
+      },
+    }
+  },
 }

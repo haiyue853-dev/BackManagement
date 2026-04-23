@@ -1,4 +1,5 @@
 <script setup>
+import { ElMessage } from 'element-plus'
 import { ref, getCurrentInstance, onMounted, reactive } from 'vue'
 
 const handleClick = () => {}
@@ -92,7 +93,7 @@ const handleDelete = (val) => {
 }
 
 const action = ref('add')
-const dialogVisible = ref(true)
+const dialogVisible = ref(false)
 const formUser = reactive({
   name: '',
   age: null,
@@ -113,9 +114,53 @@ const rules = reactive({
 
 const handleClose = () => {
   dialogVisible.value = false
+  proxy.$refs['userForm'].resetFields()
 }
 const handleCancel = () => {
   dialogVisible.value = false
+  proxy.$refs['userForm'].resetFields()
+}
+
+const handleAdd = () => {
+  dialogVisible.value = true
+  action.value = 'add'
+}
+
+const timeFormat = (time) => {
+  var time = new Date(time)
+  var year = time.getFullYear()
+  var month = time.getMonth() + 1
+  var day = time.getDate()
+  function add(m) {
+    return m < 10 ? '0' + m : m
+  }
+  return year + '-' + add(month) + '-' + add(day)
+}
+const onSubmit = () => {
+  //先校验
+  proxy.$refs['userForm'].validate(async (valid) => {
+    if (valid) {
+      let res = null
+      formUser.birth = /^\d{4}-\d{2}-\d{2}$/.test(formUser.birth)
+        ? formUser.birth
+        : timeFormat(formUser.birth)
+      if (action.value === 'add') {
+        res = await proxy.$api.addUser(formUser)
+      }
+      if (res) {
+        dialogVisible.value = false
+        proxy.$refs['userForm'].resetFields()
+
+        getUserData()
+      }
+    } else {
+      ElMessage({
+        showClose: true,
+        message: '添加失败,请输入正确内容',
+        type: 'error',
+      })
+    }
+  })
 }
 onMounted(() => {
   getUserData()
@@ -124,7 +169,7 @@ onMounted(() => {
 
 <template>
   <div class="user-header">
-    <el-button type="primary">新增</el-button>
+    <el-button type="primary" @click="handleAdd">新增</el-button>
     <el-form :inline="true">
       <el-form-item label="请输入">
         <el-input placeholder="请输入用户名"></el-input>
