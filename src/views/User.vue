@@ -1,13 +1,13 @@
 <script setup>
-import { ElMessage } from 'element-plus'
-import { ref, getCurrentInstance, onMounted, reactive } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { ref, getCurrentInstance, onMounted, reactive, nextTick } from 'vue'
 
 const handleClick = () => {}
 
 const tableData = ref([])
 const { proxy } = getCurrentInstance()
 const getUserData = async () => {
-  let data = await proxy.$api.getUserData()
+  let data = await proxy.$api.getUserData(config)
 
   tableData.value = data.list.map((item) => {
     return {
@@ -15,6 +15,7 @@ const getUserData = async () => {
       sexLabel: item.sex == 1 ? '男' : '女',
     }
   })
+  config.total = data.count
 }
 
 const tableLabel = reactive([
@@ -45,7 +46,11 @@ const tableLabel = reactive([
 const formInline = reactive({
   keyWord: '',
 })
-
+const config = reactive({
+  name: '',
+  total: 0,
+  page: 1,
+})
 const handleSearch = () => {
   config.name = formInline.keyWord
   getUserData()
@@ -146,6 +151,8 @@ const onSubmit = () => {
         : timeFormat(formUser.birth)
       if (action.value === 'add') {
         res = await proxy.$api.addUser(formUser)
+      } else {
+        res = await proxy.$api.editUser(formUser)
       }
       if (res) {
         dialogVisible.value = false
@@ -162,6 +169,15 @@ const onSubmit = () => {
     }
   })
 }
+
+const handleEdit = (val) => {
+  action.value = 'edit'
+  dialogVisible.value = true
+
+  nextTick(() => {
+    Object.assign(formUser, { ...val, sex: '' + val.sex })
+  })
+}
 onMounted(() => {
   getUserData()
 })
@@ -170,12 +186,15 @@ onMounted(() => {
 <template>
   <div class="user-header">
     <el-button type="primary" @click="handleAdd">新增</el-button>
-    <el-form :inline="true">
+    <el-form :inline="true" :model="formInline">
       <el-form-item label="请输入">
-        <el-input placeholder="请输入用户名"></el-input>
+        <el-input
+          placeholder="请输入用户名"
+          v-model="formInline.keyWord"
+        ></el-input>
       </el-form-item>
       <el-form-item>
-        <el-button type="primary">搜索</el-button>
+        <el-button type="primary" @click="handleSearch">搜索</el-button>
       </el-form-item>
     </el-form>
   </div>
@@ -190,14 +209,26 @@ onMounted(() => {
       />
 
       <el-table-column fixed="right" label="Operations" min-width="120">
-        <template #default>
-          <el-button type="primary" size="small" @click="handleClick">
+        <template #default="scope">
+          <el-button type="primary" size="small" @click="handleEdit(scope.row)">
             编辑
           </el-button>
-          <el-button type="danger" size="small">删除</el-button>
+          <el-button type="danger" size="small" @click="handleDelete(scope.row)"
+            >删除</el-button
+          >
         </template>
       </el-table-column>
     </el-table>
+    <div class="table">
+      <el-pagination
+        class="pager"
+        background
+        layout="prev, pager, next"
+        size="small"
+        :total="config.total"
+        @current-change="handleChange"
+      />
+    </div>
   </div>
   <el-dialog
     v-model="dialogVisible"
@@ -263,12 +294,12 @@ onMounted(() => {
 }
 .table {
   position: relative;
-  height: 500px;
+  height: 50px;
 
   .pager {
     position: absolute;
     bottom: 10px;
-    right: 10px;
+    right: 30px;
   }
 }
 .el-table {
