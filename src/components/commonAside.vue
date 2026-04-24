@@ -5,6 +5,7 @@
       text-color="#fff"
       :collapse="isCollapse"
       :collapse-transition="false"
+      :default-active="activeMenu"
     >
       <h3 v-show="!isCollapse">通用后台管理系统</h3>
       <h3 v-show="isCollapse">后台</h3>
@@ -12,6 +13,7 @@
         v-for="item in noChildren"
         :index="item.path"
         :key="item.path"
+        @click="handleMenu(item)"
       >
         <component class="icons" :is="item.icon"></component>
         <span>{{ item.label }}</span>
@@ -31,6 +33,7 @@
             v-for="(subItem, subIndex) in item.children"
             :index="subItem.path"
             :key="subItem.path"
+            @click="handleMenu(subItem)"
           >
             <component class="icons" :is="subItem.icon"></component>
             <span>{{ subItem.label }}</span>
@@ -44,6 +47,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useAllDataStore } from '@/stores'
+import { useRouter, useRoute } from 'vue-router'
 
 const list = ref([
   {
@@ -94,6 +98,15 @@ const hasChildren = computed(() => list.value.filter((item) => item.children))
 const store = useAllDataStore()
 const isCollapse = computed(() => store.state.isCollapse)
 const width = computed(() => (isCollapse.value ? '64px' : '180px'))
+const router = useRouter()
+const route = useRoute()
+const activeMenu = computed(() => route.path)
+const handleMenu = (item) => {
+  if (item.path) {
+    router.push({ path: item.path })
+    store.selectMenu(item)
+  }
+}
 </script>
 
 <style lang="less" scoped>

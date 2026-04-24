@@ -3,8 +3,8 @@
     <el-tag
       v-for="(tag, index) in tags"
       :key="tag.name"
-      :closeable="tag.name !== 'home'"
-      :effect="route.name === tag.name ? 'dark' : 'light'"
+      :closable="tag.name !== 'home'"
+      :effect="route.name === tag.name ? 'dark' : 'plain'"
     >
       {{ tag.label }}
     </el-tag>
@@ -12,16 +12,12 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRoute } from 'vue-router'
-const tags = ref([
-  {
-    path: '/home',
-    name: 'home',
-    label: '首页',
-    icon: 'home',
-  },
-])
+import { useAllDataStore } from '@/stores'
+const store = useAllDataStore()
+const tags = computed(() => store.state.tags)
+
 const route = useRoute()
 </script>
 
