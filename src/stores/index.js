@@ -13,6 +13,8 @@ function initState() {
       },
     ],
     currentMenu: null,
+    menulist: [],
+    token: '',
   }
 }
 
@@ -39,10 +41,13 @@ export const useAllDataStore = defineStore('allData', () => {
       state.value.tags.splice(index, 1)
     }
   }
-
+  function updateMenulist(val) {
+    state.value.menulist = val
+  }
   return {
     state,
     selectMenu,
     removeTag,
+    updateMenulist,
   }
 })
