@@ -32,7 +32,8 @@ export const useAllDataStore = defineStore('allData', () => {
   }
 
   // 建议增加一个关闭标签的方法，方便后续开发
-  function closeTag(tag) {
+
+  function removeTag(tag) {
     const index = state.value.tags.findIndex((t) => t.name === tag.name)
     if (index !== -1) {
       state.value.tags.splice(index, 1)
@@ -42,6 +43,6 @@ export const useAllDataStore = defineStore('allData', () => {
   return {
     state,
     selectMenu,
-    closeTag,
+    removeTag,
   }
 })
