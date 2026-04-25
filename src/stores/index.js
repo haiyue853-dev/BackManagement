@@ -13,8 +13,9 @@ function initState() {
       },
     ],
     currentMenu: null,
-    menulist: [],
+    menuList: [],
     token: '',
+    routerList: [],
   }
 }
 
@@ -41,13 +42,56 @@ export const useAllDataStore = defineStore('allData', () => {
       state.value.tags.splice(index, 1)
     }
   }
-  function updateMenulist(val) {
-    state.value.menulist = val
+  function updateMenuList(val) {
+    state.value.menuList = Array.isArray(val) ? val : []
   }
+
+  function addMenu(router) {
+    const menu = state.value.menuList
+    const modules = import.meta.glob('../views/**/*.vue')
+
+    // 1. 定义数组变量名为 routeArr
+    const routeArr = []
+
+    menu.forEach((item) => {
+      if (item.children) {
+        // 处理子菜单
+        item.children.forEach((child) => {
+          // 使用反引号构建路径
+          const url = `../views/${child.url}.vue`
+          if (modules[url]) {
+            child.component = modules[url]
+          }
+          // 将子路由推入数组
+          routeArr.push(child)
+        })
+      } else {
+        // 处理无子菜单项
+        const url = `../views/${item.url}.vue`
+        if (modules[url]) {
+          item.component = modules[url]
+        }
+        // 将当前路由推入数组
+        routeArr.push(item)
+      }
+    })
+
+    // 2. 遍历 routeArr (之前写成了 routesToAdd，导致报错)
+    routeArr.forEach((routeConfig) => {
+      // 3. 使用传入的参数 router (之前写成了 routerInstance，导致报错)
+      // 确保 router/index.js 中父路由的 name 是 'main'
+      router.addRoute('main', routeConfig)
+
+      // 记录已添加的路由名称
+      state.value.routerList.push(routeConfig.name)
+    })
+  }
+
   return {
     state,
     selectMenu,
     removeTag,
-    updateMenulist,
+    updateMenuList,
+    addMenu,
   }
 })
