@@ -12,7 +12,7 @@ const router = useRouter()
 const handleLogin = async () => {
   const res = await proxy.$api.getMenu(loginForm)
   store.updateMenuList(res.menuList)
-  store.state.token = res.token
+  store.setToken(res.token)
   store.addMenu(router)
   router.push('/home')
 }

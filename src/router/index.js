@@ -1,5 +1,5 @@
-import { resolveDirective } from 'vue'
 import { createRouter, createWebHistory } from 'vue-router'
+import { useAllDataStore } from '@/stores'
 
 const routes = [
   {
@@ -33,9 +33,40 @@ const routes = [
 ]
 
 const router = createRouter({
-  //设置路由模式
   history: createWebHistory(),
   routes,
+})
+
+router.beforeEach((to, from, next) => {
+  const store = useAllDataStore()
+  const token = store.state.token
+
+  if (!token && to.path !== '/login') {
+    next('/login')
+    return
+  }
+
+  if (token && to.path === '/login') {
+    next('/home')
+    return
+  }
+
+  const menuList = Array.isArray(store.state.menuList) ? store.state.menuList : []
+  const dynamicRouteNames = menuList.flatMap((item) =>
+    item.children ? item.children.map((child) => child.name) : [item.name],
+  )
+  const needRestoreRoutes =
+    token &&
+    menuList.length > 0 &&
+    dynamicRouteNames.some((name) => name && !router.hasRoute(name))
+
+  if (needRestoreRoutes) {
+    store.addMenu(router)
+    next({ ...to, replace: true })
+    return
+  }
+
+  next()
 })
 
 export default router
