@@ -23,6 +23,11 @@ const routes = [
         name: 'mall',
         component: () => import('@/views/Mall.vue'),
       },
+      {
+        path: 'profile',
+        name: 'profile',
+        component: () => import('@/views/Profile.vue'),
+      },
     ],
   },
   {

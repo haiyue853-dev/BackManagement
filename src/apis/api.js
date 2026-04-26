@@ -1,6 +1,5 @@
 // 整个项目api统一管理
 import request from './request'
-//首页左侧表格数据
 
 export default {
   getTableData() {
@@ -61,6 +60,46 @@ export default {
       url: '/permission/getMenu',
       method: 'post',
       data: params,
+    })
+  },
+  getMallData(data) {
+    return request({
+      url: '/mall/getMallData',
+      method: 'get',
+      mock: false,
+      data,
+    })
+  },
+  addMall(data) {
+    return request({
+      url: '/mall/addMall',
+      method: 'post',
+      mock: false,
+      data,
+    })
+  },
+  editMall(data) {
+    return request({
+      url: '/mall/editMall',
+      method: 'post',
+      mock: false,
+      data,
+    })
+  },
+  deleteMall(data) {
+    return request({
+      url: '/mall/deleteMall',
+      method: 'get',
+      mock: false,
+      data,
+    })
+  },
+  updateProfile(data) {
+    return request({
+      url: '/user/updateProfile',
+      method: 'post',
+      mock: false,
+      data,
     })
   },
 }

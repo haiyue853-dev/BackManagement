@@ -1,11 +1,15 @@
 <script setup>
-import { ref, getCurrentInstance, onMounted, reactive } from 'vue'
+import { ref, getCurrentInstance, onMounted, reactive, computed } from 'vue'
+import { useAllDataStore } from '@/stores'
 import * as echarts from 'echarts'
 
 const { proxy } = getCurrentInstance()
+const store = useAllDataStore()
+const userInfo = computed(() => store.state.userInfo || {})
 const getImageUrl = (user) => {
   return new URL(`../assets/images/${user}.png`, import.meta.url).href
 }
+const avatarUrl = computed(() => getImageUrl(userInfo.value.avatar || 'user'))
 
 const tableData = ref([])
 const countData = ref([])
@@ -147,15 +151,16 @@ onMounted(() => {
     <el-col :span="8" style="margin-top: 20px">
       <el-card shadow="hover">
         <div class="user">
-          <img :src="getImageUrl('user')" class="user" />
+          <img :src="avatarUrl" class="user" />
           <div class="user-info">
-            <p class="user-info-admin">Admin</p>
-            <p class="user-info-p">超级管理员</p>
+            <p class="user-info-admin">{{ userInfo.username || '未命名用户' }}</p>
+            <p class="user-info-p">{{ userInfo.role || '未设置角色' }}</p>
+            <p class="user-signature">{{ userInfo.signature || '欢迎来到管理后台' }}</p>
           </div>
         </div>
         <div class="login-info">
-          <p>上次登录时间: <span>1111</span></p>
-          <p>上次登录地点: <span>2221</span></p>
+          <p>上次登录时间: <span>{{ userInfo.lastLoginTime || '暂无记录' }}</span></p>
+          <p>上次登录地点: <span>{{ userInfo.lastLoginCity || '未知' }}</span></p>
         </div>
       </el-card>
 

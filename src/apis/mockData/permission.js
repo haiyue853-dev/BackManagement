@@ -1,10 +1,9 @@
 import Mock from 'mockjs'
+
 export default {
   getMenu: (config) => {
     const { username, password } = JSON.parse(config.body)
-    // 先判断用户是否存在
-    // 判断账号和密码是否对应
-    //menuList用于后面做权限分配，也就是用户可以展示的菜单
+
     if (username === 'admin' && password === 'admin') {
       return {
         code: 200,
@@ -23,6 +22,13 @@ export default {
               label: '商品管理',
               icon: 'video-play',
               url: 'Mall',
+            },
+            {
+              path: '/profile',
+              name: 'profile',
+              label: '个人中心',
+              icon: 'avatar',
+              url: 'Profile',
             },
             {
               path: '/user',
@@ -54,10 +60,20 @@ export default {
             },
           ],
           token: Mock.Random.guid(),
+          userInfo: {
+            username: 'admin',
+            role: '超级管理员',
+            avatar: 'user',
+            signature: '今天也要把系统打磨到极致。',
+            lastLoginTime: '2026-04-26 09:30:00',
+            lastLoginCity: '深圳',
+          },
           message: '获取成功',
         },
       }
-    } else if (username === 'xiaoxiao' && password === 'xiaoxiao') {
+    }
+
+    if (username === 'xiaoxiao' && password === 'xiaoxiao') {
       return {
         code: 200,
         data: {
@@ -70,6 +86,13 @@ export default {
               url: 'Home',
             },
             {
+              path: '/profile',
+              name: 'profile',
+              label: '个人中心',
+              icon: 'avatar',
+              url: 'Profile',
+            },
+            {
               path: '/user',
               name: 'user',
               label: '用户管理',
@@ -78,16 +101,24 @@ export default {
             },
           ],
           token: Mock.Random.guid(),
+          userInfo: {
+            username: 'xiaoxiao',
+            role: '运营专员',
+            avatar: 'user-default',
+            signature: '持续迭代，交付稳定体验。',
+            lastLoginTime: '2026-04-25 20:16:00',
+            lastLoginCity: '广州',
+          },
           message: '获取成功',
         },
       }
-    } else {
-      return {
-        code: -999,
-        data: {
-          message: '密码错误',
-        },
-      }
+    }
+
+    return {
+      code: -999,
+      data: {
+        message: '密码错误',
+      },
     }
   },
 }

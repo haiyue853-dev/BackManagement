@@ -17,6 +17,14 @@ function initState() {
     currentMenu: null,
     menuList: [],
     token: '',
+    userInfo: {
+      username: '',
+      role: '',
+      avatar: 'user',
+      signature: '',
+      lastLoginTime: '',
+      lastLoginCity: '',
+    },
     routerList: [],
   }
 }
@@ -32,6 +40,10 @@ function loadState() {
       ...parsed,
       tags: parsed.tags?.length ? parsed.tags : initState().tags,
       menuList: Array.isArray(parsed.menuList) ? parsed.menuList : [],
+      userInfo: {
+        ...initState().userInfo,
+        ...(parsed.userInfo || {}),
+      },
       routerList: Array.isArray(parsed.routerList) ? parsed.routerList : [],
     }
   } catch {
@@ -71,6 +83,18 @@ export const useAllDataStore = defineStore('allData', () => {
   function setToken(token) {
     state.value.token = token || ''
     persistState()
+  }
+
+  function setUserInfo(userInfo) {
+    state.value.userInfo = {
+      ...state.value.userInfo,
+      ...(userInfo || {}),
+    }
+    persistState()
+  }
+
+  function updateUserInfo(userInfo) {
+    setUserInfo(userInfo)
   }
 
   function clearAuthState() {
@@ -122,6 +146,8 @@ export const useAllDataStore = defineStore('allData', () => {
     updateMenuList,
     addMenu,
     setToken,
+    setUserInfo,
+    updateUserInfo,
     clearAuthState,
   }
 })
