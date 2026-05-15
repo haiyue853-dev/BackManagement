@@ -5,35 +5,35 @@ const routes = [
   {
     path: '/',
     name: 'main',
-    component: () => import('@/views/Main.vue'),
+    component: () => import('../views/Main.vue'),
     redirect: '/home',
     children: [
       {
         path: 'home',
         name: 'home',
-        component: () => import('@/views/Home.vue'),
+        component: () => import('../views/Home.vue'),
       },
       {
-        path: '/user',
+        path: 'user',
         name: 'user',
-        component: () => import('@/views/User.vue'),
+        component: () => import('../views/User.vue'),
       },
       {
         path: 'mall',
         name: 'mall',
-        component: () => import('@/views/Mall.vue'),
+        component: () => import('../views/Mall.vue'),
       },
       {
         path: 'profile',
         name: 'profile',
-        component: () => import('@/views/Profile.vue'),
+        component: () => import('../views/Profile.vue'),
       },
     ],
   },
   {
     path: '/login',
     name: 'login',
-    component: () => import('@/views/Login.vue'),
+    component: () => import('../views/Login.vue'),
   },
 ]
 
@@ -42,18 +42,16 @@ const router = createRouter({
   routes,
 })
 
-router.beforeEach((to, from, next) => {
+router.beforeEach((to, from) => {
   const store = useAllDataStore()
   const token = store.state.token
 
   if (!token && to.path !== '/login') {
-    next('/login')
-    return
+    return '/login'
   }
 
   if (token && to.path === '/login') {
-    next('/home')
-    return
+    return '/home'
   }
 
   const menuList = Array.isArray(store.state.menuList) ? store.state.menuList : []
@@ -67,11 +65,8 @@ router.beforeEach((to, from, next) => {
 
   if (needRestoreRoutes) {
     store.addMenu(router)
-    next({ ...to, replace: true })
-    return
+    return { ...to, replace: true }
   }
-
-  next()
 })
 
 export default router
