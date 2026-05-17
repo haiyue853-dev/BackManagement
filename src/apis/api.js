@@ -25,32 +25,31 @@ export default {
   },
   getUserData(data) {
     return request({
-      url: '/home/getUserData',
+      url: '/users',
       method: 'get',
       mock: false,
       data,
     })
   },
-  deleteUser(data) {
+  deleteUser(id) {
     return request({
-      url: '/user/deleteUser',
-      method: 'get',
+      url: `/users/${id}`,
+      method: 'delete',
       mock: false,
-      data,
     })
   },
   addUser(data) {
     return request({
-      url: '/user/addUser',
+      url: '/users',
       method: 'post',
       mock: false,
       data,
     })
   },
-  editUser(data) {
+  editUser(id, data) {
     return request({
-      url: '/user/editUser',
-      method: 'post',
+      url: `/users/${id}`,
+      method: 'put',
       mock: false,
       data,
     })

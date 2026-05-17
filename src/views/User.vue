@@ -7,14 +7,9 @@ const handleClick = () => {}
 const tableData = ref([])
 const { proxy } = getCurrentInstance()
 const getUserData = async () => {
-  let data = await proxy.$api.getUserData(config)
+  const data = await proxy.$api.getUserData(config)
 
-  tableData.value = data.list.map((item) => {
-    return {
-      ...item,
-      sexLabel: item.sex == 1 ? '男' : '女',
-    }
-  })
+  tableData.value = data.list
   config.total = data.count
 }
 
@@ -50,6 +45,7 @@ const config = reactive({
   name: '',
   total: 0,
   page: 1,
+  pageSize: 10
 })
 const handleSearch = () => {
   config.name = formInline.keyWord
@@ -71,7 +67,7 @@ const handleDelete = (val) => {
         console.log('开始删除，ID:', val.id)
 
         // 2. 执行删除请求
-        await proxy.$api.deleteUser({ id: val.id })
+        await proxy.$api.deleteUser(val.id)
 
         // 3. 提示成功
         ElMessage({
@@ -152,7 +148,7 @@ const onSubmit = () => {
       if (action.value === 'add') {
         res = await proxy.$api.addUser(formUser)
       } else {
-        res = await proxy.$api.editUser(formUser)
+        res = await proxy.$api.editUser(formUser.id, formUser)
       }
       if (res) {
         dialogVisible.value = false
