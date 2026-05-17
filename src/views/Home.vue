@@ -1,5 +1,5 @@
 <script setup>
-import { ref, getCurrentInstance, onMounted, reactive, computed } from 'vue'
+import { ref, getCurrentInstance, onMounted, onUnmounted, reactive, computed } from 'vue'
 import { useAllDataStore } from '@/stores'
 import * as echarts from 'echarts'
 
@@ -15,6 +15,7 @@ const tableData = ref([])
 const countData = ref([])
 const chartData = ref([])
 const observer = ref(null)
+let resizeTimer = null
 
 const tableLabel = ref({
   name: '课程',
@@ -128,11 +129,15 @@ const getChartData = async () => {
   const threeEchart = echarts.init(proxy.$refs['videoEchart'])
   threeEchart.setOption(pieOptions)
   //监听页面变化
-  //监听容器大小变化 改变之后执行回调
-  observer.value = new ResizeObserver((en) => {
-    oneEchart.resize()
-    twoEchart.resize()
-    threeEchart.resize()
+  //监听容器大小变化 改变之后执行回调（添加节流避免频繁触发）
+  observer.value = new ResizeObserver((entries) => {
+    if (resizeTimer) return
+    resizeTimer = setTimeout(() => {
+      oneEchart.resize()
+      twoEchart.resize()
+      threeEchart.resize()
+      resizeTimer = null
+    }, 100)
   })
   //容器存在
   if (proxy.$refs['echart']) {
@@ -143,6 +148,17 @@ onMounted(() => {
   getTableData()
   getCountData()
   getChartData()
+})
+
+onUnmounted(() => {
+  if (observer.value) {
+    observer.value.disconnect()
+    observer.value = null
+  }
+  if (resizeTimer) {
+    clearTimeout(resizeTimer)
+    resizeTimer = null
+  }
 })
 </script>
 
