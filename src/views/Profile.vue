@@ -1,11 +1,12 @@
 <script setup>
-import { reactive, computed, getCurrentInstance, nextTick } from 'vue'
+import { reactive, computed, getCurrentInstance, nextTick, onMounted, ref } from 'vue'
 import { useAllDataStore } from '@/stores'
 import { ElMessage } from 'element-plus'
 
 const { proxy } = getCurrentInstance()
 const store = useAllDataStore()
 const userInfo = computed(() => store.state.userInfo || {})
+const loading = ref(false)
 
 const getImageUrl = (user) =>
   new URL(`../assets/images/${user}.png`, import.meta.url).href
@@ -38,6 +39,20 @@ const resetFormData = () => {
 
 resetFormData()
 
+const getProfileData = async () => {
+  loading.value = true
+
+  try {
+    const data = await proxy.$api.getProfile()
+    store.updateUserInfo(data)
+    resetFormData()
+  } catch (error) {
+    ElMessage.error('个人信息加载失败，请稍后重试')
+  } finally {
+    loading.value = false
+  }
+}
+
 const handleReset = () => {
   nextTick(() => {
     proxy.$refs['profileFormRef']?.resetFields()
@@ -61,15 +76,19 @@ const handleSubmit = () => {
 
     const res = await proxy.$api.updateProfile(payload)
     if (res) {
-      store.updateUserInfo(payload)
+      store.updateUserInfo(res)
       ElMessage.success('个人信息已更新')
     }
   })
 }
+
+onMounted(() => {
+  getProfileData()
+})
 </script>
 
 <template>
-  <div class="profile-page">
+  <div class="profile-page" v-loading="loading">
     <el-row :gutter="20">
       <el-col :span="8">
         <el-card shadow="hover" class="profile-card">

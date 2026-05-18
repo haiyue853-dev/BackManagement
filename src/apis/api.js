@@ -58,6 +58,7 @@ export default {
     return request({
       url: '/permission/getMenu',
       method: 'post',
+      mock: false,
       data: params,
     })
   },
@@ -94,10 +95,17 @@ export default {
   },
   updateProfile(data) {
     return request({
-      url: '/user/updateProfile',
-      method: 'post',
+      url: '/profile',
+      method: 'put',
       mock: false,
       data,
+    })
+  },
+  getProfile() {
+    return request({
+      url: '/profile',
+      method: 'get',
+      mock: false,
     })
   },
 }

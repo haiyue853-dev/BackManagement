@@ -10,12 +10,16 @@ const { proxy } = getCurrentInstance()
 const store = useAllDataStore()
 const router = useRouter()
 const handleLogin = async () => {
-  const res = await proxy.$api.getMenu(loginForm)
-  store.updateMenuList(res.menuList)
-  store.setToken(res.token)
-  store.setUserInfo(res.userInfo)
-  store.addMenu(router)
-  router.push('/home')
+  try {
+    const res = await proxy.$api.getMenu(loginForm)
+    store.updateMenuList(res.menuList)
+    store.setToken(res.token)
+    store.setUserInfo(res.userInfo)
+    store.addMenu(router)
+    router.push('/home')
+  } catch (error) {
+    // The request layer already shows the error message.
+  }
 }
 </script>
 
