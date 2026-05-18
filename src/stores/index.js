@@ -11,8 +11,8 @@ function initState() {
         path: '/home',
         name: 'home',
         label: '首页',
-        icon: 'home',
-      },
+        icon: 'house'
+      }
     ],
     currentMenu: null,
     menuList: [],
@@ -23,9 +23,9 @@ function initState() {
       avatar: 'user',
       signature: '',
       lastLoginTime: '',
-      lastLoginCity: '',
+      lastLoginCity: ''
     },
-    routerList: [],
+    routerList: []
   }
 }
 
@@ -42,9 +42,9 @@ function loadState() {
       menuList: Array.isArray(parsed.menuList) ? parsed.menuList : [],
       userInfo: {
         ...initState().userInfo,
-        ...(parsed.userInfo || {}),
+        ...(parsed.userInfo || {})
       },
-      routerList: Array.isArray(parsed.routerList) ? parsed.routerList : [],
+      routerList: Array.isArray(parsed.routerList) ? parsed.routerList : []
     }
   } catch {
     return initState()
@@ -56,6 +56,11 @@ export const useAllDataStore = defineStore('allData', () => {
 
   function persistState() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state.value))
+  }
+
+  function toggleCollapse() {
+    state.value.isCollapse = !state.value.isCollapse
+    persistState()
   }
 
   function selectMenu(val) {
@@ -88,7 +93,7 @@ export const useAllDataStore = defineStore('allData', () => {
   function setUserInfo(userInfo) {
     state.value.userInfo = {
       ...state.value.userInfo,
-      ...(userInfo || {}),
+      ...(userInfo || {})
     }
     persistState()
   }
@@ -105,7 +110,6 @@ export const useAllDataStore = defineStore('allData', () => {
   function addMenu(router) {
     const menu = state.value.menuList
     const modules = import.meta.glob('../views/**/*.vue')
-
     const routeArr = []
 
     menu.forEach((item) => {
@@ -141,6 +145,7 @@ export const useAllDataStore = defineStore('allData', () => {
 
   return {
     state,
+    toggleCollapse,
     selectMenu,
     removeTag,
     updateMenuList,
@@ -148,6 +153,6 @@ export const useAllDataStore = defineStore('allData', () => {
     setToken,
     setUserInfo,
     updateUserInfo,
-    clearAuthState,
+    clearAuthState
   }
 })

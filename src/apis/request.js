@@ -5,7 +5,7 @@ import router from '@/router'
 import { useAllDataStore } from '@/stores'
 
 const service = axios.create()
-const NETWORK__ERROR = '网络错误'
+const NETWORK_ERROR = '网络异常，请稍后重试'
 const STORAGE_KEY = 'allDataStore'
 
 function getToken() {
@@ -31,42 +31,40 @@ function clearAuthAndRedirect() {
   }
 }
 
-// 添加请求拦截器
 service.interceptors.request.use(
-  function (config) {
+  (requestConfig) => {
     const token = getToken()
+
     if (token) {
-      config.headers = config.headers || {}
-      config.headers.Authorization = `Bearer ${token}`
+      requestConfig.headers = requestConfig.headers || {}
+      requestConfig.headers.Authorization = `Bearer ${token}`
     }
-    return config
+
+    return requestConfig
   },
-  function (error) {
-    return Promise.reject(error)
-  },
+  (error) => Promise.reject(error)
 )
 
-// 添加响应拦截器
 service.interceptors.response.use(
   (res) => {
     const { code, data, message, msg } = res.data
-    if (code == 200) {
+
+    if (code === 200) {
       return data
-    } else {
-      const errorMessage = message || msg || NETWORK__ERROR
-      ElMessage.error(errorMessage)
-      return Promise.reject(errorMessage)
     }
+
+    const errorMessage = message || msg || NETWORK_ERROR
+    ElMessage.error(errorMessage)
+    return Promise.reject(new Error(errorMessage))
   },
   (error) => {
     const status = error.response?.status
-    const message = error.response?.data?.message || NETWORK__ERROR
+    const message = error.response?.data?.message || NETWORK_ERROR
+
+    ElMessage.error(message)
 
     if (status === 401) {
-      ElMessage.error(message)
       clearAuthAndRedirect()
-    } else {
-      ElMessage.error(message)
     }
 
     return Promise.reject(error)
@@ -74,20 +72,23 @@ service.interceptors.response.use(
 )
 
 function request(options) {
-  options.method = options.method || 'get'
-  if (options.method.toLowerCase() === 'get') {
-    options.params = options.data
+  const requestOptions = {
+    method: 'get',
+    ...options
   }
+
+  if (requestOptions.method.toLowerCase() === 'get') {
+    requestOptions.params = requestOptions.data
+  }
+
   let isMock = config.mock
-  if (typeof options.mock != 'undefined') {
-    isMock = options.mock
+  if (typeof requestOptions.mock !== 'undefined') {
+    isMock = requestOptions.mock
   }
-  if (config.env === 'prod') {
-    // 不能用mock
-    service.defaults.baseURL = config.baseApi
-  } else {
-    service.defaults.baseURL = isMock ? config.mockApi : config.baseApi
-  }
-  return service(options)
+
+  service.defaults.baseURL = isMock ? config.mockApi : config.baseApi
+
+  return service(requestOptions)
 }
+
 export default request

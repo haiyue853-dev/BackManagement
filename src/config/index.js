@@ -1,22 +1,14 @@
-const env = import.meta.env.MODE || 'prod'
+const env = import.meta.env.MODE || 'development'
 
-const EnvConfig = {
-  development: {
-    baseApi: '/api',
-    mockApi: '/api',
-  },
-  test: {
-    baseApi: '//test.future.com/api',
-    mockApi: 'https://apifoxmock.com/m1/4068509-0-default/api',
-  },
-  prod: {
-    baseApi: '//future.com/api',
-    mockApi: 'https://apifoxmock.com/m1/4068509-0-default/api',
-  },
-}
+const baseApi = import.meta.env.VITE_API_BASE || '/api'
+const mockApi =
+  import.meta.env.VITE_MOCK_API ||
+  'https://apifoxmock.com/m1/4068509-0-default/api'
+const mock = String(import.meta.env.VITE_USE_MOCK || 'false') === 'true'
 
 export default {
   env,
-  ...EnvConfig[env],
-  mock: false,
+  baseApi,
+  mockApi,
+  mock,
 }

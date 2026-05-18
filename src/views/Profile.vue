@@ -1,15 +1,12 @@
 <script setup>
 import { reactive, computed, getCurrentInstance, nextTick, onMounted, ref } from 'vue'
-import { useAllDataStore } from '@/stores'
 import { ElMessage } from 'element-plus'
+import { useAllDataStore } from '@/stores'
 
 const { proxy } = getCurrentInstance()
 const store = useAllDataStore()
 const userInfo = computed(() => store.state.userInfo || {})
 const loading = ref(false)
-
-const getImageUrl = (user) =>
-  new URL(`../assets/images/${user}.png`, import.meta.url).href
 
 const profileForm = reactive({
   username: '',
@@ -17,29 +14,36 @@ const profileForm = reactive({
   avatar: 'user',
   signature: '',
   lastLoginTime: '',
-  lastLoginCity: '',
+  lastLoginCity: ''
 })
 
-const rules = reactive({
-  username: [{ required: true, message: '用户名不能为空', trigger: 'blur' }],
-  role: [{ required: true, message: '角色不能为空', trigger: 'blur' }],
-  avatar: [{ required: true, message: '头像标识不能为空', trigger: 'change' }],
-})
+const rules = {
+  username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
+  role: [{ required: true, message: '请输入角色', trigger: 'blur' }],
+  avatar: [{ required: true, message: '请选择头像', trigger: 'change' }]
+}
 
-const resetFormData = () => {
+const avatarOptions = [
+  { label: '管理员头像', value: 'user' },
+  { label: '默认头像', value: 'user-default' }
+]
+
+const avatarUrl = computed(
+  () => new URL(`../assets/images/${profileForm.avatar || 'user'}.png`, import.meta.url).href
+)
+
+function resetFormData() {
   Object.assign(profileForm, {
     username: userInfo.value.username || '',
     role: userInfo.value.role || '',
     avatar: userInfo.value.avatar || 'user',
     signature: userInfo.value.signature || '',
     lastLoginTime: userInfo.value.lastLoginTime || '',
-    lastLoginCity: userInfo.value.lastLoginCity || '',
+    lastLoginCity: userInfo.value.lastLoginCity || ''
   })
 }
 
-resetFormData()
-
-const getProfileData = async () => {
+async function getProfileData() {
   loading.value = true
 
   try {
@@ -47,42 +51,46 @@ const getProfileData = async () => {
     store.updateUserInfo(data)
     resetFormData()
   } catch (error) {
-    ElMessage.error('个人信息加载失败，请稍后重试')
+    ElMessage.error('个人资料加载失败，请检查后端服务或登录状态')
   } finally {
     loading.value = false
   }
 }
 
-const handleReset = () => {
+function handleReset() {
   nextTick(() => {
-    proxy.$refs['profileFormRef']?.resetFields()
+    proxy.$refs.profileFormRef?.resetFields()
     resetFormData()
   })
 }
 
-const handleSubmit = () => {
-  proxy.$refs['profileFormRef'].validate(async (valid) => {
+function handleSubmit() {
+  proxy.$refs.profileFormRef.validate(async (valid) => {
     if (!valid) {
-      ElMessage.error('请完善个人信息后再保存')
+      ElMessage.error('请先完成表单填写')
       return
     }
 
     const payload = {
       ...profileForm,
+      username: profileForm.username.trim(),
+      role: profileForm.role.trim(),
+      signature: profileForm.signature.trim(),
       lastLoginTime:
         profileForm.lastLoginTime || new Date().toLocaleString('zh-CN', { hour12: false }),
-      lastLoginCity: profileForm.lastLoginCity || '未知',
+      lastLoginCity: profileForm.lastLoginCity.trim() || '未知'
     }
 
     const res = await proxy.$api.updateProfile(payload)
     if (res) {
       store.updateUserInfo(res)
-      ElMessage.success('个人信息已更新')
+      ElMessage.success('个人资料更新成功')
     }
   })
 }
 
 onMounted(() => {
+  resetFormData()
   getProfileData()
 })
 </script>
@@ -93,10 +101,10 @@ onMounted(() => {
       <el-col :span="8">
         <el-card shadow="hover" class="profile-card">
           <div class="profile-summary">
-            <img :src="getImageUrl(profileForm.avatar || 'user')" class="avatar" />
-            <p class="name">{{ profileForm.username || '未命名用户' }}</p>
+            <img :src="avatarUrl" class="avatar" />
+            <p class="name">{{ profileForm.username || '未登录用户' }}</p>
             <el-tag type="success">{{ profileForm.role || '未设置角色' }}</el-tag>
-            <p class="signature">{{ profileForm.signature || '这个人很酷，什么都没留下。' }}</p>
+            <p class="signature">{{ profileForm.signature || '这个人很低调，还没有留下签名。' }}</p>
           </div>
         </el-card>
       </el-col>
@@ -104,10 +112,15 @@ onMounted(() => {
       <el-col :span="16">
         <el-card shadow="hover">
           <template #header>
-            <div class="card-header">个人信息设置</div>
+            <div class="card-header">个人资料设置</div>
           </template>
 
-          <el-form :model="profileForm" :rules="rules" label-width="100px" ref="profileFormRef">
+          <el-form
+            ref="profileFormRef"
+            :model="profileForm"
+            :rules="rules"
+            label-width="100px"
+          >
             <el-form-item label="用户名" prop="username">
               <el-input v-model="profileForm.username" placeholder="请输入用户名" />
             </el-form-item>
@@ -116,24 +129,28 @@ onMounted(() => {
               <el-input v-model="profileForm.role" placeholder="请输入角色" />
             </el-form-item>
 
-            <el-form-item label="头像标识" prop="avatar">
+            <el-form-item label="头像" prop="avatar">
               <el-select v-model="profileForm.avatar" placeholder="请选择头像">
-                <el-option label="默认头像" value="user" />
-                <el-option label="浅色头像" value="user-default" />
+                <el-option
+                  v-for="item in avatarOptions"
+                  :key="item.value"
+                  :label="item.label"
+                  :value="item.value"
+                />
               </el-select>
             </el-form-item>
 
-            <el-form-item label="个性签名" prop="signature">
+            <el-form-item label="个性签名">
               <el-input
+                v-model="profileForm.signature"
                 type="textarea"
                 :rows="3"
-                v-model="profileForm.signature"
                 placeholder="请输入个性签名"
               />
             </el-form-item>
 
-            <el-form-item label="登录地点" prop="lastLoginCity">
-              <el-input v-model="profileForm.lastLoginCity" placeholder="请输入登录地点" />
+            <el-form-item label="最近登录城市">
+              <el-input v-model="profileForm.lastLoginCity" placeholder="请输入最近登录城市" />
             </el-form-item>
 
             <el-form-item>

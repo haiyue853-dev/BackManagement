@@ -1,35 +1,35 @@
 <script setup>
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { ref, getCurrentInstance, onMounted, reactive, nextTick } from 'vue'
+import { ref, reactive, getCurrentInstance, onMounted, nextTick } from 'vue'
+
+const { proxy } = getCurrentInstance()
 
 const tableData = ref([])
 const tableLoading = ref(false)
 const loadError = ref('')
-const { proxy } = getCurrentInstance()
+const action = ref('add')
+const dialogVisible = ref(false)
 
-const tableLabel = reactive([
+const tableLabel = [
   { prop: 'name', label: '商品名称', width: 180 },
   { prop: 'category', label: '商品分类', width: 120 },
   { prop: 'price', label: '商品价格', width: 120 },
-  { prop: 'stock', label: '商品库存', width: 100 },
-  { prop: 'status', label: '商品状态', width: 100 },
-  { prop: 'coverTag', label: '商品标签', width: 100 },
-  { prop: 'updateTime', label: '更新时间', width: 180 },
-])
+  { prop: 'stock', label: '商品库存', width: 120 },
+  { prop: 'status', label: '商品状态', width: 120 },
+  { prop: 'coverTag', label: '标签', width: 120 },
+  { prop: 'updateTime', label: '更新时间', width: 180 }
+]
 
 const formInline = reactive({
-  keyWord: '',
+  keyWord: ''
 })
 
 const config = reactive({
-  name: '',
+  keyword: '',
   total: 0,
   page: 1,
-  pageSize: 10,
+  pageSize: 10
 })
-
-const action = ref('add')
-const dialogVisible = ref(false)
 
 const formMall = reactive({
   id: null,
@@ -39,28 +39,30 @@ const formMall = reactive({
   stock: null,
   status: '上架',
   coverTag: '',
-  desc: '',
+  desc: ''
 })
 
-const rules = reactive({
+const rules = {
   name: [{ required: true, message: '请输入商品名称', trigger: 'blur' }],
   category: [{ required: true, message: '请输入商品分类', trigger: 'blur' }],
   price: [
     { required: true, message: '请输入商品价格', trigger: 'blur' },
-    { type: 'number', message: '商品价格必须是数字', trigger: 'blur' },
+    { type: 'number', message: '商品价格必须是数字', trigger: 'blur' }
   ],
   stock: [
     { required: true, message: '请输入商品库存', trigger: 'blur' },
-    { type: 'number', message: '商品库存必须是数字', trigger: 'blur' },
+    { type: 'number', message: '商品库存必须是数字', trigger: 'blur' }
   ],
-  status: [{ required: true, message: '请选择商品状态', trigger: 'change' }],
-})
+  status: [{ required: true, message: '请选择商品状态', trigger: 'change' }]
+}
 
-const formatDateTime = (value) => {
-  if (!value) {
-    return ''
-  }
+const statusOptions = [
+  { label: '上架', value: '上架' },
+  { label: '下架', value: '下架' }
+]
 
+function formatDateTime(value) {
+  if (!value) return ''
   const date = new Date(value)
 
   if (Number.isNaN(date.getTime())) {
@@ -77,7 +79,7 @@ const formatDateTime = (value) => {
   return `${year}-${month}-${day} ${hour}:${minute}:${second}`
 }
 
-const getMallData = async () => {
+async function getMallData() {
   tableLoading.value = true
   loadError.value = ''
 
@@ -85,30 +87,30 @@ const getMallData = async () => {
     const data = await proxy.$api.getMallData(config)
     tableData.value = data.list.map((item) => ({
       ...item,
-      updateTime: formatDateTime(item.updateTime || item.updatedAt),
+      updateTime: formatDateTime(item.updateTime || item.updatedAt)
     }))
     config.total = data.count
   } catch (error) {
     tableData.value = []
     config.total = 0
-    loadError.value = '商品数据加载失败，请稍后重试'
+    loadError.value = '商品列表加载失败，请检查后端服务或登录状态'
   } finally {
     tableLoading.value = false
   }
 }
 
-const handleSearch = () => {
+function handleSearch() {
   config.page = 1
-  config.name = formInline.keyWord.trim()
+  config.keyword = formInline.keyWord.trim()
   getMallData()
 }
 
-const handleChange = (page) => {
+function handleChange(page) {
   config.page = page
   getMallData()
 }
 
-const resetForm = () => {
+function resetForm() {
   Object.assign(formMall, {
     id: null,
     name: '',
@@ -117,12 +119,12 @@ const resetForm = () => {
     stock: null,
     status: '上架',
     coverTag: '',
-    desc: '',
+    desc: ''
   })
-  proxy.$refs.mallForm?.resetFields()
+  proxy.$refs.mallFormRef?.resetFields()
 }
 
-const handleAdd = () => {
+function handleAdd() {
   action.value = 'add'
   dialogVisible.value = true
   nextTick(() => {
@@ -130,11 +132,12 @@ const handleAdd = () => {
   })
 }
 
-const handleEdit = (row) => {
+function handleEdit(row) {
   action.value = 'edit'
   dialogVisible.value = true
+
   nextTick(() => {
-    proxy.$refs.mallForm?.resetFields()
+    resetForm()
     Object.assign(formMall, {
       id: row.id,
       name: row.name,
@@ -143,29 +146,25 @@ const handleEdit = (row) => {
       stock: Number(row.stock),
       status: row.status,
       coverTag: row.coverTag || '',
-      desc: row.desc || '',
+      desc: row.desc || ''
     })
   })
 }
 
-const handleClose = () => {
+function handleClose() {
   dialogVisible.value = false
   resetForm()
 }
 
-const handleCancel = () => {
+function handleCancel() {
   dialogVisible.value = false
   resetForm()
 }
 
-const onSubmit = () => {
-  proxy.$refs.mallForm.validate(async (valid) => {
+function onSubmit() {
+  proxy.$refs.mallFormRef.validate(async (valid) => {
     if (!valid) {
-      ElMessage({
-        showClose: true,
-        message: '请正确填写商品表单',
-        type: 'error',
-      })
+      ElMessage.error('请先完成表单填写')
       return
     }
 
@@ -176,7 +175,7 @@ const onSubmit = () => {
       stock: Number(formMall.stock),
       status: formMall.status,
       coverTag: formMall.coverTag.trim(),
-      desc: formMall.desc.trim(),
+      desc: formMall.desc.trim()
     }
 
     try {
@@ -186,40 +185,26 @@ const onSubmit = () => {
         await proxy.$api.editMall(formMall.id, payload)
       }
 
-      ElMessage({
-        showClose: true,
-        message: action.value === 'add' ? '新增商品成功' : '编辑商品成功',
-        type: 'success',
-      })
-
+      ElMessage.success(action.value === 'add' ? '新增商品成功' : '编辑商品成功')
       dialogVisible.value = false
       resetForm()
       getMallData()
     } catch (error) {
-      ElMessage({
-        showClose: true,
-        message: action.value === 'add' ? '新增商品失败' : '编辑商品失败',
-        type: 'error',
-      })
+      ElMessage.error(action.value === 'add' ? '新增商品失败' : '编辑商品失败')
     }
   })
 }
 
-const handleDelete = (row) => {
-  ElMessageBox.confirm('确认删除这个商品吗？', '提示', {
+function handleDelete(row) {
+  ElMessageBox.confirm(`确认删除商品 ${row.name} 吗？`, '删除提示', {
     confirmButtonText: '删除',
     cancelButtonText: '取消',
-    type: 'warning',
+    type: 'warning'
   })
     .then(async () => {
       try {
         await proxy.$api.deleteMall(row.id)
-
-        ElMessage({
-          showClose: true,
-          message: '删除商品成功',
-          type: 'success',
-        })
+        ElMessage.success('删除商品成功')
 
         if (tableData.value.length === 1 && config.page > 1) {
           config.page -= 1
@@ -227,11 +212,7 @@ const handleDelete = (row) => {
 
         getMallData()
       } catch (error) {
-        ElMessage({
-          showClose: true,
-          message: '删除商品失败，请稍后重试',
-          type: 'error',
-        })
+        ElMessage.error('删除商品失败')
       }
     })
     .catch(() => {})
@@ -246,7 +227,7 @@ onMounted(() => {
   <div class="mall-header">
     <el-button type="primary" @click="handleAdd">新增商品</el-button>
     <el-form :inline="true" :model="formInline">
-      <el-form-item label="关键字">
+      <el-form-item label="商品搜索">
         <el-input
           v-model="formInline.keyWord"
           placeholder="请输入商品名称或分类"
@@ -293,7 +274,7 @@ onMounted(() => {
       </el-table-column>
     </el-table>
 
-    <div v-if="tableLoading" class="table-state">正在加载商品数据...</div>
+    <div v-if="tableLoading" class="table-state">正在加载商品列表...</div>
 
     <div class="table-pager">
       <el-pagination
@@ -315,66 +296,56 @@ onMounted(() => {
     width="45%"
     :before-close="handleClose"
   >
-    <el-form ref="mallForm" :inline="true" :model="formMall" :rules="rules">
-      <el-row>
-        <el-col :span="12">
-          <el-form-item label="商品名称" prop="name">
-            <el-input v-model="formMall.name" placeholder="请输入商品名称" />
-          </el-form-item>
-        </el-col>
-        <el-col :span="12">
-          <el-form-item label="商品分类" prop="category">
-            <el-input v-model="formMall.category" placeholder="请输入商品分类" />
-          </el-form-item>
-        </el-col>
-      </el-row>
+    <el-form
+      ref="mallFormRef"
+      :model="formMall"
+      :rules="rules"
+      label-width="90px"
+    >
+      <el-form-item label="商品名称" prop="name">
+        <el-input v-model="formMall.name" placeholder="请输入商品名称" />
+      </el-form-item>
 
-      <el-row>
-        <el-col :span="12">
-          <el-form-item label="商品价格" prop="price">
-            <el-input v-model.number="formMall.price" placeholder="请输入商品价格" />
-          </el-form-item>
-        </el-col>
-        <el-col :span="12">
-          <el-form-item label="商品库存" prop="stock">
-            <el-input v-model.number="formMall.stock" placeholder="请输入商品库存" />
-          </el-form-item>
-        </el-col>
-      </el-row>
+      <el-form-item label="商品分类" prop="category">
+        <el-input v-model="formMall.category" placeholder="请输入商品分类" />
+      </el-form-item>
 
-      <el-row>
-        <el-col :span="12">
-          <el-form-item class="select-clearn" label="商品状态" prop="status">
-            <el-select v-model="formMall.status" placeholder="请选择商品状态">
-              <el-option label="上架" value="上架" />
-              <el-option label="下架" value="下架" />
-            </el-select>
-          </el-form-item>
-        </el-col>
-        <el-col :span="12">
-          <el-form-item label="商品标签" prop="coverTag">
-            <el-input v-model="formMall.coverTag" placeholder="请输入商品标签" />
-          </el-form-item>
-        </el-col>
-      </el-row>
+      <el-form-item label="商品价格" prop="price">
+        <el-input v-model.number="formMall.price" placeholder="请输入商品价格" />
+      </el-form-item>
 
-      <el-row>
-        <el-form-item label="商品描述" prop="desc">
-          <el-input
-            v-model="formMall.desc"
-            type="textarea"
-            :rows="3"
-            placeholder="请输入商品描述"
+      <el-form-item label="商品库存" prop="stock">
+        <el-input v-model.number="formMall.stock" placeholder="请输入商品库存" />
+      </el-form-item>
+
+      <el-form-item label="商品状态" prop="status">
+        <el-select v-model="formMall.status" placeholder="请选择商品状态">
+          <el-option
+            v-for="item in statusOptions"
+            :key="item.value"
+            :label="item.label"
+            :value="item.value"
           />
-        </el-form-item>
-      </el-row>
+        </el-select>
+      </el-form-item>
 
-      <el-row style="justify-content: flex-end">
-        <el-form-item>
-          <el-button @click="handleCancel">取消</el-button>
-          <el-button type="primary" @click="onSubmit">确定</el-button>
-        </el-form-item>
-      </el-row>
+      <el-form-item label="商品标签">
+        <el-input v-model="formMall.coverTag" placeholder="请输入商品标签" />
+      </el-form-item>
+
+      <el-form-item label="商品描述">
+        <el-input
+          v-model="formMall.desc"
+          type="textarea"
+          :rows="3"
+          placeholder="请输入商品描述"
+        />
+      </el-form-item>
+
+      <el-form-item class="dialog-actions">
+        <el-button @click="handleCancel">取消</el-button>
+        <el-button type="primary" @click="onSubmit">确定</el-button>
+      </el-form-item>
     </el-form>
   </el-dialog>
 </template>
@@ -402,19 +373,21 @@ onMounted(() => {
 
     .pager {
       position: absolute;
-      bottom: 10px;
       right: 30px;
+      bottom: 10px;
     }
   }
-}
-
-.select-clearn {
-  display: flex;
 }
 
 .table-state {
   margin-top: 12px;
   color: #666;
   font-size: 14px;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
 }
 </style>

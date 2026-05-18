@@ -1,48 +1,45 @@
 <script setup>
 import { reactive, getCurrentInstance } from 'vue'
-import { useAllDataStore } from '@/stores/'
 import { useRouter } from 'vue-router'
+import { useAllDataStore } from '@/stores'
+
+const { proxy } = getCurrentInstance()
+const router = useRouter()
+const store = useAllDataStore()
+
 const loginForm = reactive({
   username: '',
-  password: '',
+  password: ''
 })
-const { proxy } = getCurrentInstance()
-const store = useAllDataStore()
-const router = useRouter()
-const handleLogin = async () => {
-  try {
-    const res = await proxy.$api.getMenu(loginForm)
-    store.updateMenuList(res.menuList)
-    store.setToken(res.token)
-    store.setUserInfo(res.userInfo)
-    store.addMenu(router)
-    router.push('/home')
-  } catch (error) {
-    // The request layer already shows the error message.
-  }
+
+async function handleLogin() {
+  const res = await proxy.$api.getMenu(loginForm)
+  store.updateMenuList(res.menuList)
+  store.setToken(res.token)
+  store.setUserInfo(res.userInfo)
+  store.addMenu(router)
+  router.push('/home')
 }
 </script>
 
 <template>
   <div class="body-login">
     <el-form :model="loginForm" class="login-container">
-      <h1>欢迎登录</h1>
+      <h1>后台管理系统</h1>
       <el-form-item>
         <el-input
-          type="input"
-          placeholder="请输入账号"
           v-model="loginForm.username"
-        >
-        </el-input>
+          type="text"
+          placeholder="请输入账号"
+        />
       </el-form-item>
       <el-form-item>
         <el-input
-          type="passsword"
-          placeholder="请输入密码"
           v-model="loginForm.password"
+          type="password"
           show-password
-        >
-        </el-input>
+          placeholder="请输入密码"
+        />
       </el-form-item>
       <el-form-item>
         <el-button type="primary" @click="handleLogin">登录</el-button>
@@ -55,21 +52,19 @@ const handleLogin = async () => {
 .body-login {
   width: 100%;
   min-height: 100vh;
-  /* 建议使用 cover，保证图片铺满且不变形裁剪 */
   background-image: url(../assets/images/background.png);
   background-size: cover;
   overflow: hidden;
-
-  /* 使用 flex 布局让登录框居中 */
   display: flex;
   justify-content: center;
   align-items: center;
 }
+
 .login-container {
   width: 350px;
-  padding: 30px; /* 增加内边距让表单不那么拥挤 */
+  padding: 30px;
   background-color: #fff;
-  border-radius: 8px; /* 可选：增加圆角 */
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* 可选：增加阴影 */
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 </style>

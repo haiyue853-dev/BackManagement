@@ -1,164 +1,175 @@
 <script setup>
-import { ref, getCurrentInstance, onMounted, onUnmounted, reactive, computed } from 'vue'
+import { ref, getCurrentInstance, onMounted, onUnmounted, computed } from 'vue'
 import { useAllDataStore } from '@/stores'
 import * as echarts from 'echarts'
 
 const { proxy } = getCurrentInstance()
 const store = useAllDataStore()
 const userInfo = computed(() => store.state.userInfo || {})
-const getImageUrl = (user) => {
-  return new URL(`../assets/images/${user}.png`, import.meta.url).href
-}
-const avatarUrl = computed(() => getImageUrl(userInfo.value.avatar || 'user'))
 
 const tableData = ref([])
 const countData = ref([])
-const chartData = ref([])
-const observer = ref(null)
-let resizeTimer = null
+const orderChartRef = ref(null)
+const userChartRef = ref(null)
+const pieChartRef = ref(null)
 
-const tableLabel = ref({
-  name: '课程',
+const tableLabel = {
+  name: '商品名称',
   todayBuy: '今日购买',
   monthBuy: '本月购买',
-  totalBuy: '总购买',
-})
+  totalBuy: '总购买量'
+}
 
-//这个是折线图和柱状图 两个图表共用的公共配置
-const xOptions = reactive({
-  // 图例文字颜色
-  textStyle: {
-    color: '#333',
-  },
-  legend: {},
-  grid: {
-    left: '20%',
-  },
-  // 提示框
-  tooltip: {
-    trigger: 'axis',
-  },
-  xAxis: {
-    type: 'category', // 类目轴
-    data: [],
-    axisLine: {
-      lineStyle: {
-        color: '#17b3a3',
-      },
+const avatarUrl = computed(
+  () => new URL(`../assets/images/${userInfo.value.avatar || 'user'}.png`, import.meta.url).href
+)
+
+let resizeObserver = null
+let chartInstances = []
+
+function disposeCharts() {
+  chartInstances.forEach((chart) => chart.dispose())
+  chartInstances = []
+
+  if (resizeObserver) {
+    resizeObserver.disconnect()
+    resizeObserver = null
+  }
+}
+
+function watchChartsResize() {
+  disposeObserverOnly()
+
+  resizeObserver = new ResizeObserver(() => {
+    chartInstances.forEach((chart) => chart.resize())
+  })
+
+  ;[orderChartRef.value, userChartRef.value, pieChartRef.value]
+    .filter(Boolean)
+    .forEach((el) => resizeObserver.observe(el))
+}
+
+function disposeObserverOnly() {
+  if (resizeObserver) {
+    resizeObserver.disconnect()
+    resizeObserver = null
+  }
+}
+
+function buildOrderOptions(orderData) {
+  return {
+    tooltip: { trigger: 'axis' },
+    legend: {},
+    grid: { left: '12%', right: '6%', bottom: '12%' },
+    xAxis: {
+      type: 'category',
+      data: orderData.date,
+      axisLine: {
+        lineStyle: { color: '#17b3a3' }
+      }
     },
-    axisLabel: {
-      interval: 0,
-      color: '#333',
-    },
-  },
-  yAxis: [
-    {
+    yAxis: {
       type: 'value',
       axisLine: {
-        lineStyle: {
-          color: '#17b3a3',
-        },
-      },
+        lineStyle: { color: '#17b3a3' }
+      }
     },
-  ],
-  color: ['#2ec7c9', '#b6a2de', '#5ab1ef', '#ffb980', '#d87a80', '#8d98b3'],
-  series: [],
-})
+    color: ['#2ec7c9', '#b6a2de', '#5ab1ef', '#ffb980', '#d87a80', '#8d98b3'],
+    series: Object.keys(orderData.data[0] || {}).map((key) => ({
+      name: key,
+      data: orderData.data.map((item) => item[key]),
+      type: 'line'
+    }))
+  }
+}
 
-const pieOptions = reactive({
-  tooltip: {
-    trigger: 'item',
-  },
-  legend: {},
-  color: [
-    '#0f78f4',
-    '#dd536b',
-    '#9462e5',
-    '#a6a6a6',
-    '#e1bb22',
-    '#39c362',
-    '#3ed1cf',
-  ],
-  series: [],
-})
+function buildUserOptions(userData) {
+  return {
+    tooltip: { trigger: 'axis' },
+    legend: {},
+    grid: { left: '12%', right: '6%', bottom: '12%' },
+    xAxis: {
+      type: 'category',
+      data: userData.map((item) => item.date)
+    },
+    yAxis: {
+      type: 'value'
+    },
+    color: ['#5ab1ef', '#ffb980'],
+    series: [
+      {
+        name: '新增用户',
+        data: userData.map((item) => item.new),
+        type: 'bar'
+      },
+      {
+        name: '活跃用户',
+        data: userData.map((item) => item.active),
+        type: 'bar'
+      }
+    ]
+  }
+}
 
-const getTableData = async () => {
+function buildPieOptions(videoData) {
+  return {
+    tooltip: { trigger: 'item' },
+    legend: {},
+    color: ['#0f78f4', '#dd536b', '#9462e5', '#a6a6a6', '#e1bb22', '#39c362', '#3ed1cf'],
+    series: [
+      {
+        type: 'pie',
+        data: videoData
+      }
+    ]
+  }
+}
+
+function initCharts(orderData, userData, videoData) {
+  disposeCharts()
+
+  if (orderChartRef.value) {
+    const orderChart = echarts.init(orderChartRef.value)
+    orderChart.setOption(buildOrderOptions(orderData))
+    chartInstances.push(orderChart)
+  }
+
+  if (userChartRef.value) {
+    const userChart = echarts.init(userChartRef.value)
+    userChart.setOption(buildUserOptions(userData))
+    chartInstances.push(userChart)
+  }
+
+  if (pieChartRef.value) {
+    const pieChart = echarts.init(pieChartRef.value)
+    pieChart.setOption(buildPieOptions(videoData))
+    chartInstances.push(pieChart)
+  }
+
+  watchChartsResize()
+}
+
+async function getTableData() {
   const data = await proxy.$api.getTableData()
-
   tableData.value = data.tableData
 }
-const getCountData = async () => {
+
+async function getCountData() {
   const data = await proxy.$api.getCountData()
   countData.value = data
 }
-const getChartData = async () => {
-  const { orderData, userData, videoData } = await proxy.$api.getChartData()
-  //对第一个图标进行x轴 和series赋值
-  xOptions.xAxis.data = orderData.date
-  xOptions.series = Object.keys(orderData.data[0]).map((val) => ({
-    name: val,
-    data: orderData.data.map((item) => item[val]),
-    type: 'line',
-  }))
-  const oneEchart = echarts.init(proxy.$refs['echart'])
-  oneEchart.setOption(xOptions)
 
-  //对第二个表格渲染
-  xOptions.xAxis.data = userData.map((item) => item.date)
-  xOptions.series = [
-    {
-      name: '新增用户',
-      data: userData.map((item) => item.new),
-      type: 'bar',
-    },
-    {
-      name: '活跃用户',
-      data: userData.map((item) => item.active),
-      type: 'bar',
-    },
-  ]
-  const twoEchart = echarts.init(proxy.$refs['userEchart'])
-  twoEchart.setOption(xOptions)
-  //饼状图渲染
-  pieOptions.series = [
-    {
-      data: videoData,
-      type: 'pie',
-    },
-  ]
-  const threeEchart = echarts.init(proxy.$refs['videoEchart'])
-  threeEchart.setOption(pieOptions)
-  //监听页面变化
-  //监听容器大小变化 改变之后执行回调（添加节流避免频繁触发）
-  observer.value = new ResizeObserver((entries) => {
-    if (resizeTimer) return
-    resizeTimer = setTimeout(() => {
-      oneEchart.resize()
-      twoEchart.resize()
-      threeEchart.resize()
-      resizeTimer = null
-    }, 100)
-  })
-  //容器存在
-  if (proxy.$refs['echart']) {
-    observer.value.observe(proxy.$refs['echart'])
-  }
+async function getChartData() {
+  const { orderData, userData, videoData } = await proxy.$api.getChartData()
+  initCharts(orderData, userData, videoData)
 }
-onMounted(() => {
-  getTableData()
-  getCountData()
-  getChartData()
+
+onMounted(async () => {
+  await Promise.all([getTableData(), getCountData(), getChartData()])
 })
 
 onUnmounted(() => {
-  if (observer.value) {
-    observer.value.disconnect()
-    observer.value = null
-  }
-  if (resizeTimer) {
-    clearTimeout(resizeTimer)
-    resizeTimer = null
-  }
+  disposeCharts()
 })
 </script>
 
@@ -169,14 +180,14 @@ onUnmounted(() => {
         <div class="user">
           <img :src="avatarUrl" class="user" />
           <div class="user-info">
-            <p class="user-info-admin">{{ userInfo.username || '未命名用户' }}</p>
+            <p class="user-info-admin">{{ userInfo.username || '未登录用户' }}</p>
             <p class="user-info-p">{{ userInfo.role || '未设置角色' }}</p>
-            <p class="user-signature">{{ userInfo.signature || '欢迎来到管理后台' }}</p>
+            <p class="user-signature">{{ userInfo.signature || '欢迎来到后台管理系统' }}</p>
           </div>
         </div>
         <div class="login-info">
-          <p>上次登录时间: <span>{{ userInfo.lastLoginTime || '暂无记录' }}</span></p>
-          <p>上次登录地点: <span>{{ userInfo.lastLoginCity || '未知' }}</span></p>
+          <p>最近登录时间：<span>{{ userInfo.lastLoginTime || '暂无记录' }}</span></p>
+          <p>最近登录城市：<span>{{ userInfo.lastLoginCity || '未知' }}</span></p>
         </div>
       </el-card>
 
@@ -184,41 +195,43 @@ onUnmounted(() => {
         <el-table :data="tableData">
           <el-table-column
             v-for="(val, key) in tableLabel"
+            :key="key"
             :prop="key"
             :label="val"
-            :key="key"
-          >
-          </el-table-column>
+          />
         </el-table>
       </el-card>
     </el-col>
+
     <el-col :span="16" style="margin-top: 20px">
       <div class="num">
         <el-card
-          :body-style="{ display: 'flex', padding: 0 }"
           v-for="item in countData"
           :key="item.name"
+          :body-style="{ display: 'flex', padding: 0 }"
         >
           <component
             :is="item.icon"
             class="icons"
             :style="{ background: item.color }"
-          ></component>
+          />
           <div class="detail">
-            <p class="num">￥{{ item.value }}</p>
-            <p class="txt">￥{{ item.name }}</p>
+            <p class="num">{{ item.value }}</p>
+            <p class="txt">{{ item.name }}</p>
           </div>
         </el-card>
       </div>
+
       <el-card class="top-echart">
-        <div ref="echart" style="height: 280px"></div>
+        <div ref="orderChartRef" style="height: 280px"></div>
       </el-card>
+
       <div class="graph">
         <el-card>
-          <div ref="userEchart" style="height: 240px"></div>
+          <div ref="userChartRef" style="height: 240px"></div>
         </el-card>
         <el-card>
-          <div ref="videoEchart" style="height: 240px"></div>
+          <div ref="pieChartRef" style="height: 240px"></div>
         </el-card>
       </div>
     </el-col>
@@ -228,53 +241,63 @@ onUnmounted(() => {
 <style scoped lang="less">
 .home {
   height: 100%;
-  // overflow: hidden;
+
   .user {
     display: flex;
     align-items: center;
     border-bottom: 1px solid #eee;
     margin-bottom: 20px;
+
     img {
       width: 150px;
       height: 150px;
       border-radius: 50%;
       margin-right: 20px;
     }
+
     .user-info {
       p {
         line-height: 40px;
       }
     }
+
     .user-info-p {
       color: #999;
     }
+
     .user-info-admin {
       font-size: 40px;
     }
   }
+
   .login-info {
     p {
       line-height: 30px;
       font-size: 14px;
       color: #999;
+
       span {
         color: #171e1a;
-        margin-left: 60px;
+        margin-left: 20px;
       }
     }
   }
+
   .user-table {
     margin-top: 20px;
   }
+
   .num {
     display: flex;
     flex-wrap: wrap;
     justify-content: space-between;
+
     .el-card {
       width: 30%;
       margin-bottom: 20px;
       overflow: hidden;
     }
+
     .icons {
       width: 80px;
       height: 80px;
@@ -283,6 +306,7 @@ onUnmounted(() => {
       line-height: 80px;
       color: #fff;
     }
+
     .detail {
       margin-left: 15px;
       display: flex;
@@ -290,10 +314,12 @@ onUnmounted(() => {
       justify-content: center;
       height: 80px;
       overflow: hidden;
+
       .num {
         font-size: 30px;
         margin-bottom: 10px;
       }
+
       .txt {
         font-size: 15px;
         text-align: center;
@@ -301,13 +327,14 @@ onUnmounted(() => {
       }
     }
   }
+
   .graph {
     margin-top: 20px;
     display: flex;
     justify-content: space-between;
+
     .el-card {
       width: 49%;
-
       overflow: hidden;
     }
   }

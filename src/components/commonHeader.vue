@@ -1,24 +1,28 @@
 <template>
   <div class="header">
     <div class="l-content">
-      <el-button suzi="small" @click="handleCollapse">
-        <component class="icons" is="menu"></component>
+      <el-button size="small" @click="handleCollapse">
+        <component is="Menu" class="icons" />
       </el-button>
       <el-breadcrumb separator="/" class="bread">
         <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
       </el-breadcrumb>
     </div>
+
     <div class="r-content">
       <el-dropdown>
         <span class="el-dropdown-link user-entry">
           <img :src="avatarUrl" class="user" />
-          <span class="user-name">{{ userInfo.username || '未命名用户' }}</span>
-          <el-tag size="small" effect="dark" class="user-role">{{ userInfo.role || '未设置角色' }}</el-tag>
+          <span class="user-name">{{ userInfo.username || '未登录用户' }}</span>
+          <el-tag size="small" effect="dark" class="user-role">
+            {{ userInfo.role || '未设置角色' }}
+          </el-tag>
         </span>
+
         <template #dropdown>
           <el-dropdown-menu>
             <el-dropdown-item @click="goProfile">个人中心</el-dropdown-item>
-            <el-dropdown-item @click="handleLogout">退出</el-dropdown-item>
+            <el-dropdown-item @click="handleLogout">退出登录</el-dropdown-item>
           </el-dropdown-menu>
         </template>
       </el-dropdown>
@@ -28,32 +32,33 @@
 
 <script setup>
 import { computed, getCurrentInstance } from 'vue'
-import { useAllDataStore } from '@/stores'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import { useAllDataStore } from '@/stores'
 
-const getImageUrl = (user) =>
-  new URL(`../assets/images/${user}.png`, import.meta.url).href
+const { proxy } = getCurrentInstance() || {}
 const store = useAllDataStore()
 const router = useRouter()
-const { proxy } = getCurrentInstance() || {}
-const userInfo = computed(() => store.state.userInfo || {})
-const avatarUrl = computed(() => getImageUrl(userInfo.value.avatar || 'user'))
 
-const handleCollapse = () => {
-  store.state.isCollapse = !store.state.isCollapse
+const userInfo = computed(() => store.state.userInfo || {})
+const avatarUrl = computed(
+  () => new URL(`../assets/images/${userInfo.value.avatar || 'user'}.png`, import.meta.url).href
+)
+
+function handleCollapse() {
+  store.toggleCollapse()
 }
 
-const goProfile = () => {
+function goProfile() {
   router.push('/profile')
 }
 
-const handleLogout = async () => {
+async function handleLogout() {
   try {
     await proxy?.$api.logout()
-    ElMessage.success('已退出登录')
+    ElMessage.success('退出登录成功')
   } catch (error) {
-    // The request layer will handle 401 and error messages.
+    // 请求层会统一处理错误提示。
   } finally {
     store.clearAuthState()
     router.push('/login')
@@ -61,7 +66,7 @@ const handleLogout = async () => {
 }
 </script>
 
-<style lang="less" scoped>
+<style scoped lang="less">
 .header {
   display: flex;
   justify-content: space-between;
