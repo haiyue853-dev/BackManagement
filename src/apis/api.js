@@ -1,4 +1,3 @@
-// 整个项目api统一管理
 import request from './request'
 
 export default {
@@ -52,6 +51,45 @@ export default {
       method: 'put',
       mock: false,
       data,
+    })
+  },
+  getAccountData(data) {
+    return request({
+      url: '/accounts',
+      method: 'get',
+      mock: false,
+      data,
+    })
+  },
+  addAccount(data) {
+    return request({
+      url: '/accounts',
+      method: 'post',
+      mock: false,
+      data,
+    })
+  },
+  editAccount(id, data) {
+    return request({
+      url: `/accounts/${id}`,
+      method: 'put',
+      mock: false,
+      data,
+    })
+  },
+  resetAccountPassword(id, data) {
+    return request({
+      url: `/accounts/${id}/password`,
+      method: 'put',
+      mock: false,
+      data,
+    })
+  },
+  deleteAccount(id) {
+    return request({
+      url: `/accounts/${id}`,
+      method: 'delete',
+      mock: false,
     })
   },
   getMenu(params) {
