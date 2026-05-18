@@ -63,7 +63,7 @@ export default {
   },
   getMallData(data) {
     return request({
-      url: '/mall/getMallData',
+      url: '/malls',
       method: 'get',
       mock: false,
       data,
@@ -71,26 +71,25 @@ export default {
   },
   addMall(data) {
     return request({
-      url: '/mall/addMall',
+      url: '/malls',
       method: 'post',
       mock: false,
       data,
     })
   },
-  editMall(data) {
+  editMall(id, data) {
     return request({
-      url: '/mall/editMall',
-      method: 'post',
+      url: `/malls/${id}`,
+      method: 'put',
       mock: false,
       data,
     })
   },
-  deleteMall(data) {
+  deleteMall(id) {
     return request({
-      url: '/mall/deleteMall',
-      method: 'get',
+      url: `/malls/${id}`,
+      method: 'delete',
       mock: false,
-      data,
     })
   },
   updateProfile(data) {
