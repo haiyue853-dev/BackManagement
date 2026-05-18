@@ -62,6 +62,13 @@ export default {
       data: params,
     })
   },
+  logout() {
+    return request({
+      url: '/permission/logout',
+      method: 'post',
+      mock: false,
+    })
+  },
   getMallData(data) {
     return request({
       url: '/malls',

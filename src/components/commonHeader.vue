@@ -27,14 +27,16 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, getCurrentInstance } from 'vue'
 import { useAllDataStore } from '@/stores'
 import { useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
 
 const getImageUrl = (user) =>
   new URL(`../assets/images/${user}.png`, import.meta.url).href
 const store = useAllDataStore()
 const router = useRouter()
+const { proxy } = getCurrentInstance() || {}
 const userInfo = computed(() => store.state.userInfo || {})
 const avatarUrl = computed(() => getImageUrl(userInfo.value.avatar || 'user'))
 
@@ -46,9 +48,16 @@ const goProfile = () => {
   router.push('/profile')
 }
 
-const handleLogout = () => {
-  store.clearAuthState()
-  router.push('/login')
+const handleLogout = async () => {
+  try {
+    await proxy?.$api.logout()
+    ElMessage.success('已退出登录')
+  } catch (error) {
+    // The request layer will handle 401 and error messages.
+  } finally {
+    store.clearAuthState()
+    router.push('/login')
+  }
 }
 </script>
 

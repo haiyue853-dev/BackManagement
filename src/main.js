@@ -6,7 +6,9 @@ import router from './router'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import { createPinia } from 'pinia'
 import api from '@/apis/api'
-if (import.meta.env.DEV) {
+import config from '@/config'
+
+if (import.meta.env.DEV && config.mock) {
   import('@/apis/mock.js')
 }
 

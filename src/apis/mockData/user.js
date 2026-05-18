@@ -1,5 +1,4 @@
 import Mock from 'mockjs'
-import '@/apis/mock.js'
 
 // get请求从config.url获取参数，post从config.body中获取参数
 function param2Obj(url) {
